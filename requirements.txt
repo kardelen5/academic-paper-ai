@@ -1,0 +1,8 @@
+PyPDF2
+transformers
+sentence-transformers
+nltk
+numpy
+scikit-learn
+gradio
+torch

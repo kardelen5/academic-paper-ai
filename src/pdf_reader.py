@@ -12,7 +12,7 @@ def extract_text_from_pdf(pdf_path: str) -> str:
     
     text = ""
     
-    #Sütun algılaması için iyi olan PyMuPDF
+    
     try:
         doc = fitz.open(pdf_path)
         for page_num in range(len(doc)):
@@ -29,7 +29,7 @@ def extract_text_from_pdf(pdf_path: str) -> str:
         print(f"Uyarı: PyMuPDF bu PDF'i okurken zorlandı ({e}).")
         text = "" 
         
-    # Eğer zlib hatası verip metin çıkaramadıysa buna geç
+    
     if not text.strip():
         print("Uyarı: PDF sıkıştırma hatası var. Alternatif okuyucu (PyPDF2) devreye giriyor...")
         try:

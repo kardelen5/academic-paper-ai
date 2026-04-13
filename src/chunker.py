@@ -14,11 +14,11 @@ def split_sentences(text: str) -> list:
     """
     Metni cümlelere ayırır. NLTK'nın sent_tokenize'ını kullanır.
     """
-    # Boş metin kontrolü
+
     if not text or not isinstance(text, str):
         return []
     
-    # NLTK ile cümlelere ayır
+
     sentences = nltk.sent_tokenize(text)
     
     # Cümleleri temizle baş ve sondaki boşlukları al, boş olanları çıkar
@@ -75,27 +75,6 @@ def chunk_text(text: str, chunk_size: int = 10, overlap: int = 2) -> list:
         return []
     return chunk_by_sentences(sentences, chunk_size, overlap)
 
-
-""" def chunk_with_word_limit(text: str, word_limit: int = 500, overlap_words: int = 50) -> list:
-    
-    Kelime sayısına göre parçalama (alternatif yöntem).
-    Bu daha esnek ama cümle bütünlüğü bozulabilir.
-    Kullanmayacağım ama referans olarak ekledim.
-    
-    # boşluklara göre ayır
-    words = text.split()
-    if not words:
-        return []
-    
-    chunks = []
-    i = 0
-    while i < len(words):
-        end = min(i + word_limit, len(words))
-        chunk_words = words[i:end]
-        chunk_text = ' '.join(chunk_words)
-        chunks.append(chunk_text)
-        i += word_limit - overlap_words
-    return chunks """
 
 
 if __name__ == "__main__":

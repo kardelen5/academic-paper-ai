@@ -34,10 +34,11 @@ else:
     raw_summary = app.summarize(focused_text, method="extractive_formal")
     sentences = nltk.sent_tokenize(raw_summary)
 
-    
+    # Önem sıralamasını abstract'a benzerliğe göre yeniden yap
     print("   -> Cümleler önem puanına göre sıralanıyor...")
     ranked_sentences = search_engine.find_top_chunks(query=abstract_text, chunks=sentences, top_k=len(sentences))
-
+    # Her cümleyi abstract ile karşılaştır, benzerlik skoruna göre büyükten küçüğe sırala.
+    # top_k = len(sentences) ile tüm cümleleri sıralanmış olarak al.
     
     selected_sentences = []
     current_word_count = 0

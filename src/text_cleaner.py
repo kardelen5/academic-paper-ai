@@ -6,7 +6,7 @@ def clean_text(text: str) -> str:
     if not text:
         return ""
         
-    
+    #Satır sonundaki tire + boşluk desenini kaldır
     text = re.sub(r'-\s+', '', text)
     
     
@@ -28,15 +28,16 @@ def clean_text(text: str) -> str:
             processed_lines.append(line)
             i += 1
     
-    
+    #İşlenmiş satırları tek bir metin haline getir
     text = ' '.join(processed_lines)
     
-    
+    #Tüm çoklu boşlukları tek boşluk yap
     text = re.sub(r'\s+', ' ', text)  
     
-    
+    #Metnin başındaki ve sonundaki boşlukları temizle
     text = text.strip()
     
+    #Art arda gelen noktaları tek nokta yap
     text = re.sub(r'\.{2,}', '.', text) 
     
     return text
@@ -45,8 +46,7 @@ def clean_text(text: str) -> str:
 def remove_references_section(text: str) -> str:
     """
     Metindeki referanslar bölümünü kaldırmaya çalışır.
-    Akademik makalelerdeki farklı formatları (örrn: '6. References', 'REFERENCES') 
-    yakalayabilmek için geliştirilmiş Regex kullanır.
+
     """
     
     pattern = re.compile(r'(?:^\s*|\n)(?:\d+\.\s*)?(references|kaynaklar|bibliography)[\.\:]?\s*(?:$|\n)', re.IGNORECASE)
@@ -54,8 +54,9 @@ def remove_references_section(text: str) -> str:
     match = pattern.search(text)
     if match:
         
-        print(f"\n[BİLGİ] Referanslar bölümü başarıyla bulundu ve atıldı! (Yakalanan Başlık: '{match.group(1).capitalize()}')")
+        print(f"\nReferanslar bölümü başarıyla bulundu ve atıldı! (Yakalanan Başlık: '{match.group(1).capitalize()}')")
         text = text[:match.start()]
+        #Metni baştan referans başlığının başladığı yere kadar kes (referanslar kısmını at)
     else:
         print("\n[UYARI] Referanslar başlığı bulunamadı, metin kesilmedi.")
         
@@ -69,7 +70,7 @@ def normalize_whitespace(text: str) -> str:
 def extract_abstract(text: str) -> str:
     """
     Makalenin içinden 'Abstract' kısmını bulur ve çıkarır.
-    Bu kısım RAG mimarimizde 'Arama Sorgusu' (Query) olarak kullanılacaktır.
+    Bu kısım RAG mimarimizde 'Arama Sorgusu' olarak kullanılacaktır.
     """
     
     import re

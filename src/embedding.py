@@ -9,7 +9,7 @@ class TextEmbedder:
         """
         Hafif ve anlamsal arama (semantic search) için optimize edilmiş modeli yükler.
         """
-        print(f"[BİLGİ] Embedding modeli yükleniyor: {model_name}...")
+        print(f" Embedding modeli yükleniyor: {model_name}...")
         self.model = SentenceTransformer(model_name)
         
     def get_embedding(self, text: str) -> np.ndarray:

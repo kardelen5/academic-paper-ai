@@ -1,44 +1,39 @@
 import re
 
 def clean_text(text: str) -> str:
-    
+    """
+    RAG motoruna gitmeden önce metindeki telif haklarını, dergi isimlerini, 
+    linkleri ve alakasız yasal uyarıları temizler.
+    """
+    # URL'leri, DOI linklerini ve E-postaları sil
+    text = re.sub(r'http[s]?://\S+', '', text)
+    text = re.sub(r'www\.\S+', '', text)
+    text = re.sub(r'\S+@\S+\.\S+', '', text)
+    text = re.sub(r'\b10\.\d{4,9}/[-._;()/:A-Z0-9]+\b', '', text, flags=re.IGNORECASE)
 
-    if not text:
-        return ""
-        
-    #Satır sonundaki tire + boşluk desenini kaldır
-    text = re.sub(r'-\s+', '', text)
+    # Akademik Yayıncıların (ACM, IEEE vb.) Klasik Telif Metinleri
+    boilerplate_patterns = [
+        r"Permission to make digital or hard copies.*?fee\.",
+        r"Copyrights for components of this work.*?honored\.",
+        r"Copyrights for components of the work.*?honored\.",
+        r"Abstracting with credit is permitted\.",
+        r"To copy otherwise, or republish.*?fee\.",
+        r"CCS CONCEPTS\s*•?\s*Computing methodologies.*?(?=\n|[A-Z][a-z])", # ACM'nin CCS Concepts kısmını yakalar
+        r"ACM Reference Format:",
+        r"IEEE Transactions on.*?Vol\..*?\d{4}",
+        r"Findings of the Association for Computational Linguistics.*?\d{4}",
+        r"For confidential support call.*?samaritans\.org\.?"
+    ]
     
+    # Büyük/küçük harf duyarsız, satır atlamalarını kapsa
+    for pattern in boilerplate_patterns:
+        text = re.sub(pattern, '', text, flags=re.IGNORECASE | re.DOTALL)
+
+    # Sembol ve sayı temizliği
+    text = re.sub(r'\[\d+(,\s*\d+)*\]', '', text)
     
-    lines = text.split('\n')
-    processed_lines = []
-    i = 0
-    while i < len(lines):
-        line = lines[i].rstrip()  
-        
-        
-        if line.endswith('-') and i + 1 < len(lines):
-            
-            next_line = lines[i + 1].lstrip()
-            combined = line[:-1] + next_line  
-            processed_lines.append(combined)
-            i += 2  
-        else:
-            
-            processed_lines.append(line)
-            i += 1
-    
-    #İşlenmiş satırları tek bir metin haline getir
-    text = ' '.join(processed_lines)
-    
-    #Tüm çoklu boşlukları tek boşluk yap
-    text = re.sub(r'\s+', ' ', text)  
-    
-    #Metnin başındaki ve sonundaki boşlukları temizle
-    text = text.strip()
-    
-    #Art arda gelen noktaları tek nokta yap
-    text = re.sub(r'\.{2,}', '.', text) 
+    # Silinen metinler yüzünden oluşan dev boşlukları tek boşluğa indirir
+    text = re.sub(r'\s+', ' ', text).strip()
     
     return text
 

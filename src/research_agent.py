@@ -1,61 +1,56 @@
 """
-Agentic RAG Mimarisi: 'Kesin Filtre' (Hard Filter) ve Cross-Encoder ile çalışan Ajan.
+Agentic RAG Mimarisi: Multi-Source (ArXiv + OpenAlex), Hard Filter ve Cross-Encoder.
 """
 import numpy as np
 from sentence_transformers import CrossEncoder
 from src.arxiv_fetcher import ArxivFetcher
+from src.openalex_fetcher import OpenAlexFetcher
 
 class ResearchAgent:
     def __init__(self):
-        print("[SİSTEM] Yapay Zeka Araştırma Ajanı (Research Agent) başlatılıyor...")
-        self.fetcher = ArxivFetcher()
+        print("---Araştırma başlatılıyor---")
+        self.arxiv_fetcher = ArxivFetcher()
+        self.oa_fetcher = OpenAlexFetcher()
         
-        print("⚖️ Yargıç Model (Cross-Encoder) yükleniyor: ms-marco-MiniLM-L-6-v2...")
+        print("Cross-Encoder yükleniyor") #ms-marco-MiniLM-L-6-v2
         self.confidence_model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
 
-    # DİKKAT: focus_word parametresi geri geldi ve max_results 10'a çıkarıldı!
-    def search_and_score(self, query: str, focus_word: str = "", max_results: int = 10, threshold: float = 50.0):
-        """
-        1. ArXiv'den makaleleri çeker.
-        2. KESİN FİLTRE: focus_word varsa, içermeyen makaleleri anında siler.
-        3. Cross-Encoder ile Confidence (Eminlik) skoru üretir.
-        """
-        # ArXiv'den daha geniş bir havuz (10 makale) çekiyoruz
-        papers = self.fetcher.search_papers(query, max_results)
+    def search_and_score(self, query: str, focus_word: str = "", max_results: int = 15, threshold: float = 50.0):
+        print("\nKütüphaneler taranıyor")
+        
+        arxiv_papers = self.arxiv_fetcher.search_papers(query, max_results)
+        for p in arxiv_papers: p["source"] = "ArXiv" 
+            
+        oa_papers = self.oa_fetcher.search_papers(query, max_results)
 
-        if not papers:
-            print("[UYARI] ArXiv'den makale çekilemedi.")
+        all_papers = arxiv_papers + oa_papers
+
+        if not all_papers:
+            print("[UYARI] Hiçbir kaynaktan makale çekilemedi.")
             return []
+            
+        print(f"\nToplam {len(all_papers)} makale toplandı (ArXiv: {len(arxiv_papers)}, OpenAlex: {len(oa_papers)})")
 
-        # -------------------------------------------------------------
-        # 1. KESİN FİLTRE (HARD FILTER / GATEKEEPER) AŞAMASI
-        # -------------------------------------------------------------
         if focus_word:
-            print(f"\n[🛡️ KAPI GÖREVLİSİ] İçinde '{focus_word}' geçmeyen makaleler acımasızca eleniyor...")
+            print(f"\nİçinde '{focus_word}' geçmeyen makaleler eleniyor!")
             gecerli_makaleler = []
-            for paper in papers:
-                # Odak kelimesi makalenin özetinde VEYA başlığında geçiyorsa içeri al
+            for paper in all_papers:
                 if focus_word.lower() in paper["abstract"].lower() or focus_word.lower() in paper["title"].lower():
                     gecerli_makaleler.append(paper)
             
-            papers = gecerli_makaleler
-            print(f"[🛡️ FİLTRE SONUCU] Kriteri karşılayan makale sayısı: {len(papers)}")
+            all_papers = gecerli_makaleler
+            print(f"Kriteri karşılayan makale sayısı: {len(all_papers)}")
 
-        if not papers:
-            print(f"[UYARI] '{focus_word}' kelimesini içeren hiçbir makale bulunamadı. Lütfen aramayı değiştirin.")
+        if not all_papers:
+            print(f"[UYARI] '{focus_word}' kelimesini içeren makale bulunamadı.")
             return []
 
-        # -------------------------------------------------------------
-        # 2. CROSS-ENCODER İLE EMİNLİK PUANLAMASI
-        # -------------------------------------------------------------
-        print("\n[AJAN DÜŞÜNÜYOR] Kalan makale özetleri okunuyor ve 'Eminlik Derecesi' hesaplanıyor...")
+        print("\nKalan makale özetleri okunuyor.")
 
         filtered_papers = []
-
-        for paper in papers:
+        for paper in all_papers:
             ham_skor = self.confidence_model.predict([query, paper["abstract"]])
             confidence_score = (1 / (1 + np.exp(-ham_skor))) * 100
-
             paper["similarity_score"] = float(confidence_score)
 
             if confidence_score >= threshold:
@@ -68,6 +63,6 @@ class ResearchAgent:
         print("="*70)
         
         for p in filtered_papers:
-            print(f"[Eminlik Skoru: %{p['similarity_score']:.1f}] {p['title']}")
+            print(f"[Eminlik: %{p['similarity_score']:.1f}] [{p['source']}] {p['title']}")
             
         return filtered_papers

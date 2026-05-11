@@ -1,6 +1,7 @@
 import os
 import requests
 import nltk
+from deep_translator import GoogleTranslator
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -42,11 +43,29 @@ if __name__ == "__main__":
     console.print(Panel.fit("[bold cyan]---ARAŞTIRMA ASİSTANI---[/bold cyan]", border_style="cyan"))
 
     konu = console.input("[bold yellow]Araştırma Konusu (Örn: Large Language Models in Healthcare): [/bold yellow]")
-    odak_kelimesi = console.input("[bold yellow]Odak/Zorunlu Kelime (İstemiyorsanız boş bırakın): [/bold yellow]")
+    
+    # --- YENİ GELİŞMİŞ VE TEMİZ KULLANICI ARAYÜZÜ ---
+    console.print("\n[bold cyan]--- Gelişmiş Filtreleme (İstemiyorsanız boş bırakıp Enter'a basın) ---[/bold cyan]")
+    must_input = console.input("[bold yellow]Zorunlu Kelimeler (Kesinlikle geçmeli, virgülle ayırın): [/bold yellow]")
+    should_input = console.input("[bold yellow]Opsiyonel Kelimeler (Geçerse artı puan, virgülle ayırın): [/bold yellow]")
+    
+    keywords_config = {}
+    
+    # Zorunlu kelimeleri sözlüğe ekle
+    if must_input.strip():
+        for kw in must_input.split(","):
+            kw = kw.strip().lower()
+            if kw: keywords_config[kw] = "MUST"
+            
+    # Opsiyonel kelimeleri sözlüğe ekle
+    if should_input.strip():
+        for kw in should_input.split(","):
+            kw = kw.strip().lower()
+            if kw: keywords_config[kw] = "SHOULD"
+    # ------------------------------------------------
     
     agent = ResearchAgent()
-    # ArXiv'den 15, Semantic Scholar'dan 15 = Toplam 30 makale toplanacak.
-    uygun_makaleler = agent.search_and_score(query=konu, focus_word=odak_kelimesi, max_results=15, threshold=50.0)
+    uygun_makaleler = agent.search_and_score(query=konu, keywords_config=keywords_config, max_results=15, threshold=50.0)
 
     if not uygun_makaleler:
         console.print(Panel("[bold red]Uygun makale bulunamadı. Sistem kapatılıyor.[/bold red]"))
@@ -96,7 +115,15 @@ if __name__ == "__main__":
                     
                     app = MultiModelSummarizer()
                     final_summary = app.summarize(focused_text, method="abstractive_formal", min_length=150, max_length=250)
-                    console.print(Panel(final_summary, title=f"[bold green]ÖZET[/bold green]", border_style="green", expand=False))
+                    
+                    # --- YENİ EKLENEN ÇEVİRİ KISMI ---
+                    console.print("[dim italic]Özet Türkçe'ye çevriliyor...[/dim italic]")
+                    translated_summary = GoogleTranslator(source='en', target='tr').translate(final_summary)
+                    
+                    # Hem İngilizce hem Türkçe paneli alt alta basıyoruz (Karşılaştırma yapabilmen için)
+                    console.print(Panel(final_summary, title=f"[bold blue]İNGİLİZCE ÖZET[/bold blue]", border_style="blue", expand=False))
+                    console.print(Panel(translated_summary, title=f"[bold green]TÜRKÇE ÖZET[/bold green]", border_style="green", expand=False))
+                    # ---------------------------------
                     
                     islem_basarili_mi = True
                     

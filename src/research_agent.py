@@ -15,7 +15,7 @@ class ResearchAgent:
         print("Cross-Encoder yükleniyor") #ms-marco-MiniLM-L-6-v2
         self.confidence_model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
 
-    def search_and_score(self, query: str, focus_word: str = "", max_results: int = 15, threshold: float = 50.0):
+    def search_and_score(self, query: str, keywords_config: dict = None, max_results: int = 15, threshold: float = 50.0):
         print("\nKütüphaneler taranıyor")
         
         arxiv_papers = self.arxiv_fetcher.search_papers(query, max_results)
@@ -31,20 +31,50 @@ class ResearchAgent:
             
         print(f"\nToplam {len(all_papers)} makale toplandı (ArXiv: {len(arxiv_papers)}, OpenAlex: {len(oa_papers)})")
 
-        if focus_word:
-            print(f"\nİçinde '{focus_word}' geçmeyen makaleler eleniyor!")
+        # =========================================================
+        # 🛡️ YENİ KAPI GÖREVLİSİ (GELİŞMİŞ FİLTRELEME)
+        # =========================================================
+        if keywords_config:
+            print("\n[🛡️ KAPI GÖREVLİSİ] Gelişmiş anahtar kelime filtresi uygulanıyor...")
             gecerli_makaleler = []
-            for paper in all_papers:
-                if focus_word.lower() in paper["abstract"].lower() or focus_word.lower() in paper["title"].lower():
-                    gecerli_makaleler.append(paper)
             
+            for paper in all_papers:
+                # Başlık ve özeti birleştirip küçük harfe çeviriyoruz (Arama kolaylığı için)
+                text_to_search = (paper.get("title", "") + " " + paper.get("abstract", "")).lower()
+                
+                # 1. MUST (Kesinlikle İçersin) KONTROLÜ
+                must_keywords = [k for k, v in keywords_config.items() if v == "MUST"]
+                is_missing_must = False
+                for m_kw in must_keywords:
+                    if m_kw not in text_to_search:
+                        is_missing_must = True
+                        break # Zorunlu kelimelerden biri bile yoksa, diğerlerine bakmaya gerek yok
+                
+                if is_missing_must:
+                    continue # Bu makale elendi, döngünün başına dön
+                
+                # 2. SHOULD (İçerse İyi Olur) KONTROLÜ
+                found_shoulds = []
+                should_keywords = [k for k, v in keywords_config.items() if v == "SHOULD"]
+                for s_kw in should_keywords:
+                    if s_kw in text_to_search:
+                        found_shoulds.append(s_kw)
+                
+                # Makale zorunlu testleri geçti, opsiyonel kelime istatistiğini de içine yazıp listeye ekle
+                paper['found_optional_keywords'] = found_shoulds
+                gecerli_makaleler.append(paper)
+            
+            # Elenmiş listeyi, asıl listemizin üzerine yazıyoruz
             all_papers = gecerli_makaleler
             print(f"Kriteri karşılayan makale sayısı: {len(all_papers)}")
 
         if not all_papers:
-            print(f"[UYARI] '{focus_word}' kelimesini içeren makale bulunamadı.")
+            print(f"[UYARI] Zorunlu kriterleri karşılayan makale bulunamadı.")
             return []
 
+        # =========================================================
+        # ⚖️ YARGIÇ MODEL (CROSS-ENCODER SKORLAMASI)
+        # =========================================================
         print("\nKalan makale özetleri okunuyor.")
 
         filtered_papers = []
@@ -63,6 +93,8 @@ class ResearchAgent:
         print("="*70)
         
         for p in filtered_papers:
-            print(f"[Eminlik: %{p['similarity_score']:.1f}] [{p['source']}] {p['title']}")
+            # Varsa 'Should' kelimelerini de ekranda gösterelim
+            opt_kw_text = f" (Ekstra: {', '.join(p.get('found_optional_keywords', []))})" if p.get('found_optional_keywords') else ""
+            print(f"[Eminlik: %{p['similarity_score']:.1f}] [{p['source']}] {p['title']}{opt_kw_text}")
             
         return filtered_papers

@@ -42,12 +42,12 @@ if __name__ == "__main__":
     console.clear()
     console.print(Panel.fit("[bold cyan]---ARAŞTIRMA ASİSTANI---[/bold cyan]", border_style="cyan"))
 
-    konu = console.input("[bold yellow]Araştırma Konusu (Örn: Large Language Models in Healthcare): [/bold yellow]")
+    konu = console.input("[bold yellow]Araştırma Konusu (Örn: Generative AI for 3D Character Modeling): [/bold yellow]")
     
-    # --- YENİ GELİŞMİŞ VE TEMİZ KULLANICI ARAYÜZÜ ---
+
     console.print("\n[bold cyan]--- Gelişmiş Filtreleme (İstemiyorsanız boş bırakıp Enter'a basın) ---[/bold cyan]")
-    must_input = console.input("[bold yellow]Zorunlu Kelimeler (Kesinlikle geçmeli, virgülle ayırın): [/bold yellow]")
-    should_input = console.input("[bold yellow]Opsiyonel Kelimeler (Geçerse artı puan, virgülle ayırın): [/bold yellow]")
+    must_input = console.input("[bold yellow]Zorunlu Kelimeler (-örn: generative- Kesinlikle geçmeli, virgülle ayırın): [/bold yellow]")
+    should_input = console.input("[bold yellow]Opsiyonel Kelimeler (-örn: character- Virgülle ayırın): [/bold yellow]")
     
     keywords_config = {}
     
@@ -62,7 +62,6 @@ if __name__ == "__main__":
         for kw in should_input.split(","):
             kw = kw.strip().lower()
             if kw: keywords_config[kw] = "SHOULD"
-    # ------------------------------------------------
     
     agent = ResearchAgent()
     uygun_makaleler = agent.search_and_score(query=konu, keywords_config=keywords_config, max_results=15, threshold=50.0)
@@ -87,6 +86,21 @@ if __name__ == "__main__":
         table.add_row(f"\n[bold cyan]Sıradaki makale deneniyor (Liste Sırası: {i+1})[/bold cyan]")
         table.add_row(f"[bold white]Başlık:[/bold white] {makale['title']}")
         table.add_row(f"[bold white]Skor:[/bold white] [bold green]%{makale['similarity_score']:.1f}[/bold green] | [bold white]Kaynak:[/bold white] {makale.get('source', 'ArXiv')}")
+        
+        
+        if should_input.strip():
+            # Kullanıcının girdiği opsiyonel kelimeleri listeye çevir
+            ops_kelimeler = [kw.strip().lower() for kw in should_input.split(",") if kw.strip()]
+            
+            abstract_text = makale.get('abstract', '').lower()
+            
+            # Hangi opsiyonel kelimelerin özette geçtiğini bul
+            bulunan_opsiyoneller = [kw for kw in ops_kelimeler if kw in abstract_text]
+            
+            if bulunan_opsiyoneller:
+                table.add_row(f"   [bold yellow]->Eşleşen Opsiyonel Kelimeler:[/bold yellow] [italic]{', '.join(bulunan_opsiyoneller)}[/italic]")
+
+
         console.print(table)
 
         hedef_pdf_yolu = os.path.join(pdf_klasoru, f"temp_paper_{i}.pdf")
@@ -114,16 +128,15 @@ if __name__ == "__main__":
                     focused_text = " ".join(top_chunks)
                     
                     app = MultiModelSummarizer()
-                    final_summary = app.summarize(focused_text, method="abstractive_formal", min_length=150, max_length=250)
+                    final_summary = app.summarize(focused_text, min_length=150, max_length=250)
                     
-                    # --- YENİ EKLENEN ÇEVİRİ KISMI ---
+                    
                     console.print("[dim italic]Özet Türkçe'ye çevriliyor...[/dim italic]")
                     translated_summary = GoogleTranslator(source='en', target='tr').translate(final_summary)
                     
-                    # Hem İngilizce hem Türkçe paneli alt alta basıyoruz (Karşılaştırma yapabilmen için)
                     console.print(Panel(final_summary, title=f"[bold blue]İNGİLİZCE ÖZET[/bold blue]", border_style="blue", expand=False))
                     console.print(Panel(translated_summary, title=f"[bold green]TÜRKÇE ÖZET[/bold green]", border_style="green", expand=False))
-                    # ---------------------------------
+                    
                     
                     islem_basarili_mi = True
                     

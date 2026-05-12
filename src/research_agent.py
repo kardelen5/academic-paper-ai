@@ -31,36 +31,33 @@ class ResearchAgent:
             
         print(f"\nToplam {len(all_papers)} makale toplandı (ArXiv: {len(arxiv_papers)}, OpenAlex: {len(oa_papers)})")
 
-        # =========================================================
-        # 🛡️ YENİ KAPI GÖREVLİSİ (GELİŞMİŞ FİLTRELEME)
-        # =========================================================
+        
         if keywords_config:
-            print("\n[🛡️ KAPI GÖREVLİSİ] Gelişmiş anahtar kelime filtresi uygulanıyor...")
+            print("\nKelime filtresi uygulanıyor...")
             gecerli_makaleler = []
             
             for paper in all_papers:
-                # Başlık ve özeti birleştirip küçük harfe çeviriyoruz (Arama kolaylığı için)
+                
                 text_to_search = (paper.get("title", "") + " " + paper.get("abstract", "")).lower()
                 
-                # 1. MUST (Kesinlikle İçersin) KONTROLÜ
+                # Kesin içersin kontrolü
                 must_keywords = [k for k, v in keywords_config.items() if v == "MUST"]
                 is_missing_must = False
                 for m_kw in must_keywords:
                     if m_kw not in text_to_search:
                         is_missing_must = True
-                        break # Zorunlu kelimelerden biri bile yoksa, diğerlerine bakmaya gerek yok
+                        break
                 
                 if is_missing_must:
                     continue # Bu makale elendi, döngünün başına dön
                 
-                # 2. SHOULD (İçerse İyi Olur) KONTROLÜ
+                # İçerse iyi olur kontrolü
                 found_shoulds = []
                 should_keywords = [k for k, v in keywords_config.items() if v == "SHOULD"]
                 for s_kw in should_keywords:
                     if s_kw in text_to_search:
                         found_shoulds.append(s_kw)
                 
-                # Makale zorunlu testleri geçti, opsiyonel kelime istatistiğini de içine yazıp listeye ekle
                 paper['found_optional_keywords'] = found_shoulds
                 gecerli_makaleler.append(paper)
             
@@ -72,9 +69,6 @@ class ResearchAgent:
             print(f"[UYARI] Zorunlu kriterleri karşılayan makale bulunamadı.")
             return []
 
-        # =========================================================
-        # ⚖️ YARGIÇ MODEL (CROSS-ENCODER SKORLAMASI)
-        # =========================================================
         print("\nKalan makale özetleri okunuyor.")
 
         filtered_papers = []

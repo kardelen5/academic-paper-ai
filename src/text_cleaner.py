@@ -5,13 +5,13 @@ def clean_text(text: str) -> str:
     RAG motoruna gitmeden önce metindeki telif haklarını, yazar bilgilerini, 
     dergi isimlerini ve alakasız yasal uyarıları temizler.
     """
-    # 1. URL'leri, DOI linklerini ve E-postaları sil
+    #URL'leri, DOI linklerini ve E-postaları sil
     text = re.sub(r'http[s]?://\S+', '', text)
     text = re.sub(r'www\.\S+', '', text)
     text = re.sub(r'\S+@\S+\.\S+', '', text)
     text = re.sub(r'\b10\.\d{4,9}/[-._;()/:A-Z0-9]+\b', '', text, flags=re.IGNORECASE)
 
-    # 2. Akademik Yayıncıların ve Yazarların Klasik Gürültü Metinleri
+    # Akademik Yayıncıların ve Yazarların Klasik Gürültü Metinleri
     noise_patterns = [
         r"Dean\s?&\s?Francis",
         r"Research Article", 
@@ -37,31 +37,27 @@ def clean_text(text: str) -> str:
     for pattern in noise_patterns:
         text = re.sub(pattern, '', text, flags=re.IGNORECASE | re.DOTALL)
     
-    # 3. Sembol ve sayı (referans) temizliği [1, 2] gibi
+    #Sembol ve sayı [1, 2] gibi
     text = re.sub(r'\[\d+(,\s*\d+)*\]', '', text)
     
-    # 4. Gereksiz boşlukları temizle
+    #Gereksiz boşlukları temizle
     text = re.sub(r'\s+', ' ', text).strip()
     
     return text
 
 
 def remove_references_section(text: str) -> str:
-    """
-    Agresif referans temizleyici.
-    Eğer başlığı bulamazsa, makalenin son %20'sini acımadan kesip atar.
-    """
-    # Daha geniş ve agresif bir regex (Acknowledgements dahil)
+
     pattern = re.compile(r'(?i)(?:\n|\r|^)\s*(\d*\.?\s*(?:references|bibliography|literature cited|acknowledgments|acknowledgements))[\.\:\s]*(?:\n|\r|$)', re.IGNORECASE)
     
     match = pattern.search(text)
     if match:
-        print(f"\n[✂️ TEMİZLİK] Kaynakça/Teşekkür bölümü bulundu ve ATILDI! (Yakalanan: '{match.group(1).strip()}')")
+        print(f"\nKaynakça/Teşekkür bölümü bulundu ve ATILDI")
         text = text[:match.start()]
     else:
-        # FAIL-SAFE (GÜVENLİK SÜBABI): Eğer başlık yoksa son %20'yi ZORLA KES!
+        #Eğer başlığı bulamazsa, makalenin son %20'sini acımadan kesip atar.
         kesim_noktasi = int(len(text) * 0.80)
-        print("\n[⚠️ UYARI] Referans başlığı bulunamadı! Makalenin son %20'si (tahmini referans bölgesi) zorla kesiliyor.")
+        print("\nKaynakça/Teşekkür bölümü bulunamadı! Makalenin son %20'si kesiliyor.")
         text = text[:kesim_noktasi]
         
     return text

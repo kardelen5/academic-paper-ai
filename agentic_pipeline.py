@@ -5,6 +5,7 @@ from deep_translator import GoogleTranslator
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from gtts import gTTS
 from rich import print as rprint
 from src.research_agent import ResearchAgent
 from src.pdf_reader import extract_text_from_pdf
@@ -137,6 +138,18 @@ if __name__ == "__main__":
                     console.print(Panel(final_summary, title=f"[bold blue]İNGİLİZCE ÖZET[/bold blue]", border_style="blue", expand=False))
                     console.print(Panel(translated_summary, title=f"[bold green]TÜRKÇE ÖZET[/bold green]", border_style="green", expand=False))
                     
+                    # --- YENİ EKLENEN SES (PODCAST) MODÜLÜ ---
+                    console.print("[dim italic]Ses dosyası oluşturuluyor (Podcast Modu)...[/dim italic]")
+                    try:
+                        tts = gTTS(text=translated_summary, lang='tr', slow=False)
+                        ses_dosyasi = "makale_ozeti.mp3"
+                        tts.save(ses_dosyasi)
+                        console.print(f"[bold green]🎤 Ses dosyası başarıyla oluşturuldu ve başlatılıyor...[/bold green]")
+                        
+                        os.startfile(ses_dosyasi)
+                    except Exception as e:
+                        console.print(f"[yellow]Ses özelliği şu an kullanılamıyor: {e}[/yellow]")
+                    # -----------------------------------------
                     
                     islem_basarili_mi = True
                     

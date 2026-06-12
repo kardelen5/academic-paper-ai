@@ -5,12 +5,14 @@ import numpy as np
 from sentence_transformers import CrossEncoder
 from src.arxiv_fetcher import ArxivFetcher
 from src.openalex_fetcher import OpenAlexFetcher
+from src.ssrn_fetcher import SSRNFetcher
 
 class ResearchAgent:
     def __init__(self):
         print("---Araştırma başlatılıyor---")
         self.arxiv_fetcher = ArxivFetcher()
         self.oa_fetcher = OpenAlexFetcher()
+        self.ssrn_fetcher = SSRNFetcher()
         
         print("Cross-Encoder yükleniyor") #ms-marco-MiniLM-L-6-v2
         self.confidence_model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
@@ -22,9 +24,10 @@ class ResearchAgent:
         for p in arxiv_papers: p["source"] = "ArXiv" 
             
         oa_papers = self.oa_fetcher.search_papers(query, max_results)
+        ssrn_papers = self.ssrn_fetcher.search_papers(query, max_results)
 
-        all_papers = arxiv_papers + oa_papers
-
+        all_papers = arxiv_papers + oa_papers + ssrn_papers
+        
         if not all_papers:
             print("[UYARI] Hiçbir kaynaktan makale çekilemedi.")
             return []

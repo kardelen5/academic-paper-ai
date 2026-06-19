@@ -13,28 +13,23 @@ class SSRNFetcher:
         
         params = {
             "search": query,
-            # 1. DEĞİŞİKLİK: Yanlış ID düzeltildi ve katı has_pdf_url kuralı kaldırıldı.
             "filter": "primary_location.source.id:s4210172589", 
             "per-page": max_results,
             "mailto": "kardelen@example.com" 
         }
         
         papers = []
-        max_deneme = 3 # Sistemi 3 kez denemeye zorluyoruz
-        
+        max_deneme = 3 
         for deneme in range(max_deneme):
             try:
-                # Süreyi 30 saniye yaptık
                 response = requests.get(self.base_url, params=params, timeout=30)
                 response.raise_for_status()
                 data = response.json()
                 
                 for item in data.get("results", []):
-                    # 2. DEĞİŞİKLİK: SSRN linkleri bazen landing_page (ana sayfa) olarak gelir, onu da yakalıyoruz.
                     pdf_url = item.get("primary_location", {}).get("pdf_url") or item.get("primary_location", {}).get("landing_page_url")
                     abstract_inverted = item.get("abstract_inverted_index")
 
-                    # 3. DEĞİŞİKLİK: .pdf uzantısı arama zorunluluğunu kaldırdık.
                     if pdf_url and abstract_inverted:
                         words = []
                         for word, positions in abstract_inverted.items():

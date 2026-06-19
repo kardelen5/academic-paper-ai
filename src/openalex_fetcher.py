@@ -23,13 +23,11 @@ class OpenAlexFetcher:
                 best_oa = item.get("best_oa_location") or {}
                 pdf_url = best_oa.get("pdf_url")
                 
-                # OpenAlex özetleri kelime-sıra formatında verir, onu düz metne çeviriyoruz
+                
                 abstract_inverted = item.get("abstract_inverted_index")
 
-                # Sadece hem PDF linki hem de özeti olanları havuza alıyoruz
                 if pdf_url and pdf_url.endswith('.pdf') and abstract_inverted:
                     
-                    # Şifreli özeti okunabilir metne çevirme
                     words = []
                     for word, positions in abstract_inverted.items():
                         for pos in positions:

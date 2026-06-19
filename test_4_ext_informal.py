@@ -7,13 +7,11 @@ from src.chunker import chunk_text
 from src.similarity import SimilarityEngine
 from src.text_summarizer import MultiModelSummarizer
 
-# NLTK veri paketini kontrol et
 try:
     nltk.data.find('tokenizers/punkt')
 except LookupError:
     nltk.download('punkt')
 
-# PDF YOLU
 pdf_yolu = "data/pdfs/sample.pdf"
 
 if not os.path.exists(pdf_yolu):
@@ -38,32 +36,27 @@ else:
     print("\n4. NİHAİ ÖZETLEME YAPILIYOR (Twitter RoBERTa - Duygu Odaklı)...")
     app = MultiModelSummarizer()
     
-    # Ham özeti al ve cümlelere böl
     raw_summary = app.summarize(focused_text, method="extractive_informal")
     sentences = nltk.sent_tokenize(raw_summary)
 
     print("   -> Cümleler önem puanına göre sıralanıyor ve filtreler uygulanıyor...")
     ranked_sentences = search_engine.find_top_chunks(query=abstract_text, chunks=sentences, top_k=len(sentences))
 
-    # --- KESİN KOPYA KONTROLÜ (DEDUPLICATION) ---
     selected_sentences = []
     current_word_count = 0
     seen_hashes = set() 
 
     for cumle in ranked_sentences:
-        # Cümleyi tamamen normalize et: Küçük harf yap ve tüm noktalama işaretlerini sil
         normalized = cumle.strip().lower()
         normalized = re.sub(r'[^\w\s]', '', normalized) 
         
-        # Eğer bu cümlenin temiz hali daha önce seçilmediyse ve boş değilse
         if normalized not in seen_hashes and len(normalized) > 5:
             kelime_sayisi = len(cumle.split())
             if current_word_count + kelime_sayisi <= 150:
                 selected_sentences.append(cumle)
-                seen_hashes.add(normalized) # Temiz halini hafızaya al
+                seen_hashes.add(normalized)
                 current_word_count += kelime_sayisi
 
-    # Seçilen benzersiz cümleleri orijinal metin akış sırasına göre diz
     final_sentences = [cumle for cumle in sentences if cumle in selected_sentences]
     
     final_summary = " ".join(final_sentences)

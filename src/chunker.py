@@ -27,12 +27,6 @@ def split_sentences(text: str) -> list:
 
 
 def chunk_by_sentences(sentences: list, chunk_size: int = 10, overlap: int = 2) -> list:
-    
-    #Cümle listesini belirtilen büyüklükte ve örtüşme oranında parçalara ayırır.
-        #sentences: Cümle listesi.
-        #chunk_size Her bir parçadaki cümle sayısı.
-        #overlap: Ardışık parçalar arasında örtüşen cümle sayısı.
-        #list: Her biri birleştirilmiş cümle metni olan parçalar listesi.
 
     if not sentences:
         return []
@@ -40,22 +34,18 @@ def chunk_by_sentences(sentences: list, chunk_size: int = 10, overlap: int = 2) 
     chunks = []
     step = chunk_size - overlap
     if step <= 0:
-        step = 1  # overlap >= chunk_size ise sonsuz döngüye girme
+        step = 1
     
     i = 0
     while i < len(sentences):
-        # chunk için cümleleri al
         end = min(i + chunk_size, len(sentences))
         chunk_sentences = sentences[i:end]
         chunk_text = ' '.join(chunk_sentences)
         chunks.append(chunk_text)
         
-        # Bir sonraki chunk'ın başlangıcı
         i += step
     
-    # Son chunk'ın çok kısa olması durumunda bir öncekiyle birleştir
     if len(chunks) > 1 and len(split_sentences(chunks[-1])) < overlap:
-        # son parçayı sondan bir öncekiyle birleştir
         chunks[-2] = chunks[-2] + " " + chunks[-1]
         chunks.pop()
     
@@ -63,12 +53,6 @@ def chunk_by_sentences(sentences: list, chunk_size: int = 10, overlap: int = 2) 
 
 
 def chunk_text(text: str, chunk_size: int = 10, overlap: int = 2) -> list:
-
-    #Verilen metni cümlelere ayırıp parçalara böler.
-        #text: Temizlenmiş metin.
-        #chunk_size: Parça başına cümle sayısı.
-        #overlap: Örtüşen cümle sayısı.
-        #list: Parçalanmış metin listesi.
 
     sentences = split_sentences(text)
     if not sentences:

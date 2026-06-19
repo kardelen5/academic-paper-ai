@@ -5,13 +5,11 @@ def clean_text(text: str) -> str:
     RAG motoruna gitmeden önce metindeki telif haklarını, yazar bilgilerini, 
     dergi isimlerini ve alakasız yasal uyarıları temizler.
     """
-    #URL'leri, DOI linklerini ve E-postaları sil
     text = re.sub(r'http[s]?://\S+', '', text)
     text = re.sub(r'www\.\S+', '', text)
     text = re.sub(r'\S+@\S+\.\S+', '', text)
     text = re.sub(r'\b10\.\d{4,9}/[-._;()/:A-Z0-9]+\b', '', text, flags=re.IGNORECASE)
 
-    # Akademik Yayıncıların ve Yazarların Klasik Gürültü Metinleri
     noise_patterns = [
         r"Dean\s?&\s?Francis",
         r"Research Article", 
@@ -37,10 +35,8 @@ def clean_text(text: str) -> str:
     for pattern in noise_patterns:
         text = re.sub(pattern, '', text, flags=re.IGNORECASE | re.DOTALL)
     
-    #Sembol ve sayı [1, 2] gibi
     text = re.sub(r'\[\d+(,\s*\d+)*\]', '', text)
     
-    #Gereksiz boşlukları temizle
     text = re.sub(r'\s+', ' ', text).strip()
     
     return text
@@ -55,7 +51,6 @@ def remove_references_section(text: str) -> str:
         print(f"\nKaynakça/Teşekkür bölümü bulundu ve ATILDI")
         text = text[:match.start()]
     else:
-        #Eğer başlığı bulamazsa, makalenin son %20'sini acımadan kesip atar.
         kesim_noktasi = int(len(text) * 0.80)
         print("\nKaynakça/Teşekkür bölümü bulunamadı! Makalenin son %20'si kesiliyor.")
         text = text[:kesim_noktasi]
@@ -77,7 +72,6 @@ def extract_abstract(text: str) -> str:
     
     if match:
         extracted = match.group(1).strip()
-        # Yakalanan özetin içindeki yazar kalıntılarını tekrar temizle
         return clean_text(extracted)
             
     print("[UYARI] Abstract başlığı net bulunamadı, makalenin ilk 200 kelimesi sorgu olarak kullanılacak.")

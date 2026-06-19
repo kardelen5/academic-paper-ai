@@ -2,7 +2,6 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import transformers
 import logging
 
-# Hugging Face uyarılarını sustur
 transformers.logging.set_verbosity_error()
 logging.getLogger("transformers").setLevel(logging.ERROR)
 
@@ -13,12 +12,8 @@ class MultiModelSummarizer:
         
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-
-    # Parametreleri 90 kelimeye zorlayacak şekilde güncelledik
     def summarize(self, text: str, min_length=90, max_length=250) -> str:
         
-        # "Long" kelimesi çıkarıldı, "Accurate" (Doğru/Sadık) kelimesi eklendi.
-        # Halüsinasyona karşı 3. kural (DO NOT hallucinate) eklendi.
         prompt = (
             "You are an expert academic AI assistant. Your task is to write a highly detailed, "
             "comprehensive, and accurate technical summary of the provided research text. "
@@ -36,9 +31,9 @@ class MultiModelSummarizer:
         
         outputs = self.model.generate(
             **inputs,
-            max_new_tokens=max_length, # Burası artık 350'yi fiziksel olarak geçemez
+            max_new_tokens=max_length,
             min_new_tokens=min_length, 
-            length_penalty=2.0,        # Cezayı 2.0'dan 1.0'a (nötr) çektik ki gereksiz uzatmaya çalışmasın
+            length_penalty=2.0,       
             do_sample=False,        
             num_beams=4,            
             repetition_penalty=2.0, 
@@ -47,10 +42,8 @@ class MultiModelSummarizer:
         
         final_summary = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
         
-        # Temizlik filtresi (Aynı kalıyor)
         sentences = final_summary.split('. ')
         bad_keywords = ["University", "School", "Dept", "Faculty", "Author", "Vol.", "No.", "Published", "Edited", "WANG", "GUO", "et al", "References", "Acknowledgement", "Copyright", "Press", "199", "200", "201", "202"] 
-# 199, 200, 201, 202 ekleyerek (1998), (2015), (2024) gibi yıllarla yapılan atıf cümlelerini de bloklamış olursun.
         
         filtered_sentences = [s for s in sentences if not any(word.lower() in s.lower() for word in bad_keywords)]
         

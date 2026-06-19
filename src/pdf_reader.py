@@ -18,7 +18,6 @@ def extract_text_from_pdf(pdf_path: str) -> str:
             page = doc[page_num]
             blocks = page.get_text("blocks")
             
-            # Sayfanın genişliğini ve orta noktasını (x ekseni) bul
             page_width = page.rect.width
             mid_x = page_width / 2
             
@@ -27,21 +26,19 @@ def extract_text_from_pdf(pdf_path: str) -> str:
             right_blocks = []
             
             for b in blocks:
-                if b[6] != 0: continue  # Sadece metin bloklarını al
+                if b[6] != 0: continue
                 
-                # Koordinatlar: x0 (sol), y0 (üst), x1 (sağ), y1 (alt)
                 x0, y0, x1, y1, block_text, block_num, block_type = b
                 
                 if x0 < mid_x and x1 > mid_x and (x1 - x0) > (page_width * 0.6):
                     full_width_blocks.append(b)
 
-                elif x1 <= mid_x + 40: # +40 piksel esneme payı
+                elif x1 <= mid_x + 40:
                     left_blocks.append(b)
 
                 else:
                     right_blocks.append(b)
-            
-            # Her grubu kendi içinde yukarıdan aşağıya sırala
+
             full_width_blocks.sort(key=lambda b: b[1])
             left_blocks.sort(key=lambda b: b[1])
             right_blocks.sort(key=lambda b: b[1])

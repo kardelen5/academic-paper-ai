@@ -52,13 +52,10 @@ if __name__ == "__main__":
     
     keywords_config = {}
     
-    # Zorunlu kelimeleri sözlüğe ekle
     if must_input.strip():
         for kw in must_input.split(","):
             kw = kw.strip().lower()
             if kw: keywords_config[kw] = "MUST"
-            
-    # Opsiyonel kelimeleri sözlüğe ekle
     if should_input.strip():
         for kw in should_input.split(","):
             kw = kw.strip().lower()
@@ -90,12 +87,10 @@ if __name__ == "__main__":
         
         
         if should_input.strip():
-            # Kullanıcının girdiği opsiyonel kelimeleri listeye çevir
             ops_kelimeler = [kw.strip().lower() for kw in should_input.split(",") if kw.strip()]
             
             abstract_text = makale.get('abstract', '').lower()
             
-            # Hangi opsiyonel kelimelerin özette geçtiğini bul
             bulunan_opsiyoneller = [kw for kw in ops_kelimeler if kw in abstract_text]
             
             if bulunan_opsiyoneller:
@@ -118,8 +113,6 @@ if __name__ == "__main__":
                         raise ValueError("PDF okunamayacak formatta")
                         
                     clean_txt = clean_text(remove_references_section(raw_text))
-                    # Parça boyutunu 150 kelimeye çıkardık. 
-                    # 150 kelime x 5 parça = 750 kelimelik devasa bir bağlam (Context)
                     chunks = chunk_text(clean_txt, chunk_size=150, overlap=30)
                     
                     search_engine = SimilarityEngine()
@@ -127,17 +120,14 @@ if __name__ == "__main__":
                     if len(abstract_text.split()) < 20: 
                         abstract_text = makale['abstract']
                         
-                    # Eski Hali: top_chunks = search_engine.find_top_chunks(query=abstract_text, chunks=chunks, top_k=5)
-                    # Yeni Hali:
                     top_chunks = search_engine.find_top_chunks(query=abstract_text, chunks=chunks, top_k=4)
                     focused_text = " ".join(top_chunks)
                     
                     app = MultiModelSummarizer()
                     final_summary = app.summarize(focused_text, min_length=90, max_length=250)
                     
-                    # İşlenen verinin yoğunluğunu terminalde gösteriyoruz
                     kelime_sayisi = len(focused_text.split())
-                    console.print(f"[bold green]✅ Makalenin en alakalı bölümleri) başarıyla filtrelendi ve modellendi.[/bold green]")
+                    console.print(f"[bold green]✅ Makalenin en alakalı bölümleri başarıyla filtrelendi ve modellendi.[/bold green]")
                     
                     console.print("[dim italic]Özet Türkçe'ye çevriliyor...[/dim italic]")
                     translated_summary = GoogleTranslator(source='en', target='tr').translate(final_summary)
@@ -145,7 +135,6 @@ if __name__ == "__main__":
                     console.print(Panel(final_summary, title=f"[bold blue]İNGİLİZCE ÖZET[/bold blue]", border_style="blue", expand=False))
                     console.print(Panel(translated_summary, title=f"[bold green]TÜRKÇE ÖZET[/bold green]", border_style="green", expand=False))
                     
-                    # --- YENİ EKLENEN SES (PODCAST) MODÜLÜ ---
                     console.print("[dim italic]Ses dosyası oluşturuluyor (Podcast Modu)...[/dim italic]")
                     try:
                         tts = gTTS(text=translated_summary, lang='tr', slow=False)
@@ -156,7 +145,7 @@ if __name__ == "__main__":
                         os.startfile(ses_dosyasi)
                     except Exception as e:
                         console.print(f"[yellow]Ses özelliği şu an kullanılamıyor: {e}[/yellow]")
-                    # -----------------------------------------
+                    
                     
                     islem_basarili_mi = True
                     

@@ -52,7 +52,7 @@ class ResearchAgent:
                         break
                 
                 if is_missing_must:
-                    continue # Bu makale elendi, döngünün başına dön
+                    continue
                 
                 # İçerse iyi olur kontrolü
                 found_shoulds = []
@@ -64,7 +64,6 @@ class ResearchAgent:
                 paper['found_optional_keywords'] = found_shoulds
                 gecerli_makaleler.append(paper)
             
-            # Elenmiş listeyi, asıl listemizin üzerine yazıyoruz
             all_papers = gecerli_makaleler
             print(f"Kriteri karşılayan makale sayısı: {len(all_papers)}")
 
@@ -90,7 +89,6 @@ class ResearchAgent:
         print("="*70)
         
         for p in filtered_papers:
-            # Varsa 'Should' kelimelerini de ekranda gösterelim
             opt_kw_text = f" (Ekstra: {', '.join(p.get('found_optional_keywords', []))})" if p.get('found_optional_keywords') else ""
             print(f"[Eminlik: %{p['similarity_score']:.1f}] [{p['source']}] {p['title']}{opt_kw_text}")
             

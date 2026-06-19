@@ -14,20 +14,17 @@ class ArxivFetcher:
         """
         print(f"\nArXiv'de '{query}' konusu için en alakalı makaleler aranıyor...")
         
-        # Arama sorgusunu oluşturuyoruz
         search = arxiv.Search(
             query=query,
             max_results=max_results,
-            sort_by=arxiv.SortCriterion.Relevance # konuya en uygun olanları getir
+            sort_by=arxiv.SortCriterion.Relevance
         )
 
         results = []
         try:
-            # Sonuçları listeye topluyoruz
             all_results = list(self.client.results(search))
             
             for paper in all_results:
-                # Makale bilgilerini sözlük formatında paketliyoruz
                 paper_info = {
                     "title": paper.title,
                     "abstract": paper.summary.replace('\n', ' '),

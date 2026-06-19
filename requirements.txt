@@ -4,5 +4,8 @@ sentence-transformers
 nltk
 numpy
 scikit-learn
-gradio
 torch
+streamlit
+gTTS
+deep-translator
+requests
